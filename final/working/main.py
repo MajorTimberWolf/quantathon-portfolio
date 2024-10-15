@@ -7,7 +7,7 @@ from api import setup_routes
 # Create FastAPI app
 app = FastAPI()
 
-# Setup CORS
+# Setup CORS (cross-origin resource sharing, useful for frontend interaction)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,11 +16,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load and process data
+# Load and process stock data (from historical.json or API)
 stock_prices = load_historical_stock_data('historical.json')
 normalized_stock_prices = normalize_stock_prices(stock_prices)
 
-# Setup routes
+# Setup the routes for the app, including the optimization endpoint
 setup_routes(app, stock_prices, normalized_stock_prices)
 
 if __name__ == "__main__":
