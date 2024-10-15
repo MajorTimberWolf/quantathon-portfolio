@@ -44,20 +44,22 @@ export default function Page({ searchParams: { investment, risk, stocks } }) {
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
 
+      console.log(Object.keys(data));
+
       setOptimizedWeights(data.optimized_weights);
       setInvestmentAmounts(data.investment_amounts);
       setNormalizedStockPrices(data.normalized_stock_prices);
       setTotalInvestment(
-        data.investment_amounts.reduce((acc, amount) => acc + amount, 0)
+        data.investment_amounts
       );
 
-      // Sample boilerplate data for stock explanation
       const sampleStockData = decodedStocks.map((stock) => ({
         name: stock,
         description: `The stock ${stock} is expected to have a distribution based on market analysis and trends.`
       }));
       setStockData(sampleStockData);
     } catch (error) {
+      console.error("Error fetching optimized data:", error);
       setError("Failed to fetch data from the server");
     } finally {
       setLoading(false);
