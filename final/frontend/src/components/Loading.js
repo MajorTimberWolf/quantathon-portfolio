@@ -1,4 +1,3 @@
-// components/Loading.js
 import React, { useEffect, useState } from "react";
 
 const Loading = ({ message = "Loading..." }) => {
@@ -22,21 +21,31 @@ const Loading = ({ message = "Loading..." }) => {
   }, [currentTaskIndex]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen p-10">
+    <div className="relative flex flex-col items-center justify-center h-screen p-10">
+      <video
+        className="absolute top-0 left-0 w-full h-full object-cover"
+        autoPlay
+        loop
+        muted
+      >
+        <source
+          src="https://videos.ctfassets.net/ilblxxee70tt/7H333U0Uq4p2gqka4ZSJ7k/914c77c35c549dc180f144e7bf70fea1/Dotcom_NewGeneration_Animation_WEB.mp4"
+          type="video/mp4"
+        />
+        Your browser does not support the video tag.
+      </video>
       <div className="loader mb-4"></div>
       <p className="text-2xl font-semibold text-[#fefffe]">{message}</p>
-      
       <div className="flex items-center text-[#fefffe] text-lg mt-4">
         <span>{tasks[currentTaskIndex]}</span>
       </div>
-
       <style jsx>{`
         .loader {
           border: 8px solid rgba(255, 255, 255, 0.2);
           border-left-color: #2ea583;
           border-radius: 50%;
-          width: 80px; /* Increased size */
-          height: 80px; /* Increased size */
+          width: 80px;
+          height: 80px;
           animation: spin 1s linear infinite;
         }
 
