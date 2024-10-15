@@ -39,7 +39,7 @@ export function InfoChart({
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="flex-1 pb-0 px-6">
+      <CardContent className="flex-1 pb-0 px-6 mt-10">
         <div className="text-center text-4xl font-bold mb-4">
           {totalInvestment.toLocaleString()}
         </div>
@@ -61,8 +61,8 @@ export function InfoChart({
                 role="row"
                 aria-label={`Investment in ${company}: ${investment.toLocaleString()}`}
               >
-                <span className="text-white font-bold">{company}</span>
-                <span className="text-white font-bold">
+                <span className="text-black font-bold">{company}</span>
+                <span className="text-black font-bold">
                   {investment.toLocaleString()}
                 </span>
               </div>

@@ -21,24 +21,27 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import randomColor from "randomcolor";
+
 
 export function MultipleQuantumWalkWeightsBarCharts({ data, colors }) {
-  const chartData = data[0].map((_, index) => {
-    const entry = { index };
-    data.forEach((weights, companyIndex) => {
-      entry[Object.keys(colors)[companyIndex]] = weights[index];
-    });
-    return entry;
+  console.log({ data });
+
+  const chartData = Object.keys(colors).map((company, companyIndex) => {
+    return {
+      companyName: company,
+      runs: data.map((weights) => weights[companyIndex]),
+    };
+  });
+
+  const chartConfig = {};
+  chartData.forEach((data) => {
+    chartConfig[data.companyName] = {
+      label: data.companyName,
+    };
   });
 
   console.log({ chartData });
-
-  let chartConfig = {};
-  chartData.forEach((data) => {
-    chartConfig[data.index] = {
-      label: data.index,
-    };
-  });
 
   return (
     <Card className="bg-[#1a1a1a] text-white border border-gray-700 rounded-lg shadow-lg">
@@ -59,7 +62,7 @@ export function MultipleQuantumWalkWeightsBarCharts({ data, colors }) {
               stroke="#4B5563"
             />
             <XAxis
-              dataKey="index"
+              dataKey="companyName"
               tickLine={false}
               tickMargin={10}
               axisLine={false}
@@ -67,18 +70,26 @@ export function MultipleQuantumWalkWeightsBarCharts({ data, colors }) {
             <YAxis />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
 
-            {Object.keys(colors).map((key) => (
-              <Bar key={key} dataKey={key} fill={colors[key]} radius={4}>
-                <LabelList
-                  dataKey={key}
-                  position="insideMiddle"
-                  offset={12}
-                  className="fill-white"
-                  fontSize={12}
-                  angle={-90}
-                />
-              </Bar>
-            ))}
+            {chartData[0].runs.map((_, index) => {
+              const fillColor = colors[index] || randomColor();
+              return (
+                <Bar
+                  key={index}
+                  dataKey={`runs[${index}]`}
+                  fill={fillColor}
+                  radius={4}
+                >
+                  <LabelList
+                    dataKey={`runs[${index}]`}
+                    position="insideMiddle"
+                    offset={12}
+                    className="fill-black font-bold text-lg"
+                    fontSize={12}
+                    angle={-90}
+                  />
+                </Bar>
+              );
+            })}
           </BarChart>
         </ChartContainer>
       </CardContent>

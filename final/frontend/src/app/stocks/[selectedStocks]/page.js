@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 
 const StockPage = ({ params: { selectedStocks } }) => {
-  const [investment, setInvestment] = useState(1000);
+  const [investment, setInvestment] = useState(10000);
   const [risk, setRisk] = useState(50);
   const [stocks, setStocks] = useState([]);
   const [availableStocks, setAvailableStocks] = useState([]);

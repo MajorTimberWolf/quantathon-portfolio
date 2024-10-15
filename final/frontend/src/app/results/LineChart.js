@@ -65,7 +65,7 @@ export function HistoricalPricesLineChart({ data, stockColors }) {
       <CardHeader className="px-6">
         <CardTitle className="text-2xl font-semibold">Normalized Historical Prices</CardTitle>
         <CardDescription className="text-sm text-gray-400">
-          Last 6 months
+          Last {groupedChartData.length} days
         </CardDescription>
       </CardHeader>
       <CardContent className="px-6 py-4">

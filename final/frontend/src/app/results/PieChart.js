@@ -50,7 +50,7 @@ export function InvestmentDistributionPieChart({
           Investment Distribution
         </CardTitle>
         <CardDescription className="text-sm text-gray-400">
-          Allocation by sector
+          Allocation by company
         </CardDescription>
       </CardHeader>
 
@@ -114,9 +114,9 @@ export function InvestmentDistributionPieChart({
         </div>
       </CardContent>
 
-      <CardFooter className="flex-col gap-2 px-6 text-sm">
+      <CardFooter className="flex-col items-start gap-1 px-6 pb-4 text-sm mt-5">
         <div className="leading-none text-gray-400">
-          Showing total investment distribution by sector
+          Showing total investment distribution by company
         </div>
       </CardFooter>
     </Card>
