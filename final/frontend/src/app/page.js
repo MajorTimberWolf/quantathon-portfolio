@@ -1,90 +1,137 @@
 "use client";
-
-import { useState } from "react";
-import { InvestmentDistributionPieChart } from "./PieChart";
-import { HistoricalPricesLineChart } from "./LineChart";
-import { QuantumWalkWeightsBarChart } from "./BarChart";
+import React, { useState, useEffect } from "react";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import Link from "next/link";
 
-export default function Page() {
-  const [optimizedWeights, setOptimizedWeights] = useState([]);
-  const [investmentAmounts, setInvestmentAmounts] = useState([]);
-  const [normalizedStockPrices, setNormalizedStockPrices] = useState({});
-  const [error, setError] = useState(null);
-  const [investmentAmount, setInvestmentAmount] = useState("");
-  const [loading, setLoading] = useState(false);
+const HistoricalDataPage = () => {
+  const [stocks, setStocks] = useState({});
+  const [selectedStocks, setSelectedStocks] = useState([]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!investmentAmount) return;
+  useEffect(() => {
+    fetch("http://localhost:8000/stocks")
+      .then((res) => res.json())
+      .then((data) => setStocks(data.stock_prices))
+      .catch((error) => console.error(error));
+  }, []);
 
-    setLoading(true);
+  if (Object.keys(stocks).length === 0) {
+    return <div>Loading...</div>;
+  }
 
-    try {
-      const response = await fetch(
-        `http://localhost:8000/optimize?amount=${investmentAmount}`
+  const formatChartData = (stockData) =>
+    stockData.map((data) => ({
+      date: new Date(data.date).toLocaleDateString(),
+      open: data.open,
+      close: data.close,
+      volume: data.volume,
+    }));
+
+  const chartConfig = {
+    close: {
+      label: "Closing Price",
+      color: "hsl(var(--chart-1))",
+    },
+    volume: {
+      label: "Volume",
+      color: "hsl(var(--chart-2))",
+    },
+  };
+
+  const handleStockClick = (stockSymbol) => {
+    if (selectedStocks.includes(stockSymbol)) {
+      setSelectedStocks(
+        selectedStocks.filter((symbol) => symbol !== stockSymbol)
       );
-      if (!response.ok) throw new Error("Network response was not ok");
-      const data = await response.json();
-
-      setOptimizedWeights(data.optimized_weights);
-      setInvestmentAmounts(data.investment_amounts);
-      setNormalizedStockPrices(data.normalized_stock_prices);
-    } catch (error) {
-      setError("Failed to fetch data from the server");
-    } finally {
-      setLoading(false);
+    } else if (selectedStocks.length < 15) {
+      setSelectedStocks([...selectedStocks, stockSymbol]);
     }
   };
 
-  // if (loading) return <div>Loading...</div>;
-
-  if (error) return <div className="text-red-500">{error}</div>;
-
   return (
-    <div className="flex flex-col items-center gap-8 p-6">
-      <h1 className="text-3xl font-bold text-center mb-6">
-        Quantathon - Loading: {loading ? "true" : "false"}
-      </h1>
-
-      <form
-        onSubmit={handleSubmit}
-        className="mb-4 w-full flex items-center justify-center"
-      >
-        <Input
-          type="number"
-          value={investmentAmount}
-          onChange={(e) => setInvestmentAmount(e.target.value)}
-          placeholder="Enter investment amount"
-          className="mr-2 w-full max-w-lg"
-          required
-        />
-        <Button type="submit" className="w-full max-w-xs">
-          Optimize
-        </Button>
-      </form>
-
-      {optimizedWeights.length > 0 &&
-        investmentAmounts.length > 0 &&
-        Object.keys(normalizedStockPrices).length > 0 && (
-          <div className="flex flex-row items-center w-full">
-            <div className="w-full max-w-6xl">
-              <InvestmentDistributionPieChart
-                data={investmentAmounts}
-                normalized_stock_prices={normalizedStockPrices}
-              />
-            </div>
-
-            <div className="w-full max-w-6xl">
-              <HistoricalPricesLineChart data={normalizedStockPrices} />
-            </div>
-
-            <div className="w-full max-w-6xl">
-              <QuantumWalkWeightsBarChart data={optimizedWeights} />
-            </div>
-          </div>
+    <div className="p-10 mx-auto">
+      <div class="flex justify-between">
+        <h1 className="text-3xl font-bold mb-6 text-white">
+          Historical Stock Data
+        </h1>
+        {selectedStocks.length && (
+          <Link href={`/stocks/${selectedStocks.join(",")}`}>
+            <Button variant="secondary" className="font-bold text-lg">
+              Continue with selected stocks?
+            </Button>
+          </Link>
         )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        {Object.keys(stocks).map((stockSymbol) => {
+          const isSelected = selectedStocks.includes(stockSymbol);
+
+          return (
+            <Card
+              key={stockSymbol}
+              className={`mb-4 bg-[#2d353d] ${
+                isSelected ? "border-2 border-[#2ea583]" : "border-0"
+              }`}
+              onClick={() => handleStockClick(stockSymbol)}
+              style={{ cursor: "pointer" }}
+            >
+              <CardHeader>
+                <CardTitle class="text-white font-bold text-lg">
+                  {stockSymbol}
+                </CardTitle>
+                <CardDescription class="text-slate-800 font-semibold text-md">
+                  {stockSymbol}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig}>
+                  <AreaChart
+                    accessibilityLayer
+                    data={formatChartData(stocks[stockSymbol])}
+                    margin={{ left: 12, right: 12 }}
+                  >
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                    />
+                    <YAxis />
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent indicator="line" />}
+                    />
+                    <Area
+                      dataKey="close"
+                      type="monotone"
+                      fill="var(--color-close)"
+                      fillOpacity={0.4}
+                      stroke="var(--color-close)"
+                    />
+                  </AreaChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
-}
+};
+
+export default HistoricalDataPage;
