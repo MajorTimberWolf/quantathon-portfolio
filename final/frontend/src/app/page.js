@@ -94,7 +94,7 @@ const HistoricalDataPage = () => {
             </CardHeader>
             <CardContent>
               <ChartContainer
-                config={{ close: { label: "Close", color: "#0a632d" } }}
+                config={{ close: { label: `Nifty50 Close`, color: "#0a632d" } }}
                 className="h-64 w-full"
               >
                 <AreaChart data={nifty50Data} margin={{ left: 0, right: 0 }}>
@@ -159,7 +159,7 @@ const StockCard = memo(({ stockSymbol, stockData, isSelected, onClick }) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={{ close: { label: "Close", color: areaColor } }}>
+        <ChartContainer config={{ close: { label: `${stockSymbol} Close`, color: areaColor } }}>
           <AreaChart data={formattedData} margin={{ left: 0, right: 0 }}>
             <CartesianGrid vertical={false} />
             <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />

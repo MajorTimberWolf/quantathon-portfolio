@@ -60,11 +60,7 @@ export default function Page({ searchParams: { investment, risk, stocks } }) {
       setTotalInvestment(data.investment_amounts);
       setWeightData(data.all_weights);
 
-      const sampleStockData = decodedStocks.map((stock) => ({
-        name: stock,
-        description: `The stock ${stock} is expected to have a distribution based on market analysis and trends.`,
-      }));
-      setStockData(sampleStockData);
+      setStockData(decodedStocks);
     } catch (error) {
       console.error("Error fetching optimized data:", error);
       setError("Failed to fetch data from the server");
@@ -141,7 +137,11 @@ export default function Page({ searchParams: { investment, risk, stocks } }) {
       </div>
 
       <div className="flex flex-col lg:flex-row items-center w-full">
-        <StockDistributionExplanation stockData={stockData} />
+        <StockDistributionExplanation
+          stockData={stockData}
+          optimizedWeights={optimizedWeights}
+          investmentAmounts={investmentAmounts}
+        />
       </div>
     </div>
   );

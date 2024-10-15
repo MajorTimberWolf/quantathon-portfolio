@@ -20,7 +20,6 @@ const StockPage = ({ params: { selectedStocks } }) => {
         const response = await fetch("http://localhost:8000/stocks");
         const data = await response.json();
         const stocks = Object.keys(data.stock_prices);
-        console.log(stocks);
         setAllStocks(stocks);
       } catch (error) {
         console.error("Error fetching stocks:", error);
@@ -44,6 +43,15 @@ const StockPage = ({ params: { selectedStocks } }) => {
     }
   }, [selectedStocks, allStocks]);
 
+  const handleSelectStock = (stock) => {
+    if (!stocks.includes(stock)) {
+      setStocks((prevStocks) => [...prevStocks, stock]);
+      setAvailableStocks((prevAvailable) =>
+        prevAvailable.filter((s) => s !== stock)
+      );
+    }
+  };
+
   return (
     <div className="container mx-auto py-12 px-8 bg-[#121212] text-white">
       <h1 className="text-5xl font-bold mb-8 text-center">
@@ -57,7 +65,7 @@ const StockPage = ({ params: { selectedStocks } }) => {
           </CardHeader>
           <CardContent>
             <h2 className="text-lg font-semibold mb-4">Selected Stocks</h2>
-            <div className=" mb-6 grid grid-cols-4 gap-4">
+            <div className="mb-6 grid grid-cols-4 gap-4">
               {stocks.map((stock, index) => (
                 <div
                   key={index}
@@ -73,7 +81,8 @@ const StockPage = ({ params: { selectedStocks } }) => {
               {availableStocks.map((stock, index) => (
                 <div
                   key={index}
-                  className="bg-[#2a2a2a] p-4 rounded-md text-lg font-medium"
+                  className="bg-[#2a2a2a] p-4 rounded-md text-lg font-medium cursor-pointer hover:bg-[#3a3a3a]"
+                  onClick={() => handleSelectStock(stock)}
                 >
                   {stock}
                 </div>
@@ -135,7 +144,9 @@ const StockPage = ({ params: { selectedStocks } }) => {
             </div>
 
             <Link
-              href={`/results?investment=${investment}&risk=${risk}&stocks=${selectedStocks}`}
+              href={`/results?investment=${investment}&risk=${risk}&stocks=${encodeURIComponent(
+                stocks.join(",")
+              )}`}
             >
               <Button className="w-full bg-[#2ea583] text-[#121212] hover:bg-[#28a374] rounded-lg py-3 text-lg font-semibold">
                 Generate Suggestions
