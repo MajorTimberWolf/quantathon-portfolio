@@ -5,6 +5,20 @@ const StockDistributionExplanation = ({
   optimizedWeights,
   investmentAmounts,
 }) => {
+  if (!stockData || !optimizedWeights || !investmentAmounts) {
+    console.error("Missing required props for StockDistributionExplanation");
+    return (
+      <div className="flex-1 bg-red-200 h-96 p-6 rounded-lg shadow-lg border border-gray-700">
+        <h2 className="text-2xl font-bold text-white mb-4">
+          Stock Distribution Explanation
+        </h2>
+        <p className="text-sm text-gray-400 mb-4">
+          Please select stocks to view explanations.
+        </p>
+      </div>
+    );
+  }
+  
   const [explanations, setExplanations] = useState([]);
   const hasFetchedRef = useRef(false);
 

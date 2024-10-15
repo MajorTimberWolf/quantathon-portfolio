@@ -2,7 +2,7 @@ import time
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI
-from portfolio_optimization import optimize_portfolio_with_quantum_walk
+from portfolio_optimization import compare_portfolio_methods
 import json
 from data_loader import load_historical_stock_data, normalize_stock_prices
 
@@ -20,7 +20,11 @@ def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
         normalized_stock_prices = filtered_stock_prices / filtered_stock_prices.iloc[0]
 
         for _ in range(runs):
-            optimized_weights, investment_amounts = optimize_portfolio_with_quantum_walk(filtered_stock_prices, total_investment=amount, steps=35, take_more_risk=True if risk > 0.5 else False)
+            optimized_weights, investment_amounts, cost = compare_portfolio_methods(filtered_stock_prices, total_investment=amount, steps=35, take_more_risk=True if risk > 0.5 else False)
+
+            print("Optimized Weights:", optimized_weights)
+            print("Investment Amounts:", investment_amounts)
+
             weights.append(optimized_weights.tolist())
             amounts.append(investment_amounts.tolist())
 

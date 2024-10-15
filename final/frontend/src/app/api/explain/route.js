@@ -17,11 +17,10 @@ export async function POST(request) {
     dangerouslyAllowBrowser: true,
   });
 
-  const systemPrompt = `This is a portfolio optimization system that recommends investments in a set of stocks based on a given amount and risk tolerance. 
-    Given the optimized weights for each stock, explain why each stock requires the specified investment amount. 
-    The response must strictly be in JSON format and should not include any additional text. 
-    The currency for the investment amount is Indian Rupees.
-    Example: [{stock: 'AAPL', explanation: 'Apple is a leading technology company...'}].`;
+  const systemPrompt = `This is a portfolio optimization assistant designed to recommend investments in a set of stocks based on a specified investment amount and risk tolerance. 
+Given the optimized portfolio weights for each stock, the assistant must provide a brief, clear explanation for the investment allocation to each stock, focusing on the company's financial outlook, market position, or any relevant factors influencing its risk/return profile.
+The response must be in strict JSON format, without any additional text or commentary. 
+Example: [{"stock": "AAPL", "explanation": "Apple is a market leader in consumer technology with strong revenue growth and high margins..."}].`;
 
   const prompt = stockData
     .map(

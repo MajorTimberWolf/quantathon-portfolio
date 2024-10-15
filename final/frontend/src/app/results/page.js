@@ -138,7 +138,7 @@ export default function Page({ searchParams: { investment, risk, stocks } }) {
 
       <div className="flex flex-col lg:flex-row items-center w-full">
         <StockDistributionExplanation
-          stockData={stockData}
+          // stockData={stockData}
           optimizedWeights={optimizedWeights}
           investmentAmounts={investmentAmounts}
         />
