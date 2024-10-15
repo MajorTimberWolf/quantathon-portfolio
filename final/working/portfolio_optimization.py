@@ -11,7 +11,7 @@ def cost(weights, returns, risk_factors, risk_tolerance):
     risk_penalty = portfolio_risk * risk_tolerance
     return -portfolio_return + risk_penalty + 0.1 * weighted_risk_factor
 
-def optimize_portfolio_with_quantum_walk(stock_prices, total_investment, steps=25):
+def optimize_portfolio_with_quantum_walk(stock_prices, total_investment, steps=25, take_more_risk=False):
     returns = stock_prices.pct_change().dropna().values
     num_stocks = returns.shape[1]
 
@@ -51,7 +51,15 @@ def optimize_portfolio_with_quantum_walk(stock_prices, total_investment, steps=2
         sampled_weights = np.ones(num_stocks) / num_stocks
     else:
         sampled_weights = sampled_weights / np.sum(sampled_weights)
-    sampled_weights = 0.7 * sampled_weights + 0.3 * (1 / num_stocks)  # Blend with equal weights to reduce randomness
+    
+    # **High-risk adjustment based on "take_more_risk" flag**
+    if take_more_risk:
+        # Increase allocation to riskier assets by prioritizing risk factors (i.e., stocks with more volatility)
+        sampled_weights = (risk_factors * 0.7) + (sampled_weights * 0.3)
+        sampled_weights = sampled_weights / np.sum(sampled_weights)  # Re-normalize weights
+    
+    # Blend with equal weights to reduce randomness if "take_more_risk" is False
+    sampled_weights = 0.7 * sampled_weights + 0.3 * (1 / num_stocks)
 
     # Use the sampled weights to calculate investment amounts
     investment_amounts = sampled_weights * total_investment

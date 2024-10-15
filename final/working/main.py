@@ -6,6 +6,7 @@ from api import setup_routes
 
 app = FastAPI()
 
+# Setup CORS (cross-origin resource sharing, useful for frontend interaction)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
