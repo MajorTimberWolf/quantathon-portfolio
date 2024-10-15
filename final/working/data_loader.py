@@ -9,7 +9,8 @@ def load_historical_stock_data(filename):
     stocks = list(data.keys())
     prices = []
     for stock in stocks:
-        prices.append([entry['close'] for entry in data[stock]])
+        sorted_entries = sorted(data[stock], key=lambda x: x['date'])
+        prices.append([entry['close'] for entry in sorted_entries])
     prices = np.array(prices).T
     return pd.DataFrame(prices, columns=stocks)
 

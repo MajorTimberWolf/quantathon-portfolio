@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, memo } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   Card,
@@ -16,15 +16,32 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import Link from "next/link";
+import { useDebounce } from "use-debounce";
+
+const formatChartData = (stockData) =>
+  stockData.map((data) => ({
+    date: new Date(data.date).toLocaleDateString(),
+    open: data.open,
+    close: data.close,
+    volume: data.volume,
+  }));
 
 const HistoricalDataPage = () => {
   const [stocks, setStocks] = useState({});
-  const [selectedStocks, setSelectedStocks] = useState([]);
+  const [selectedStocks, setSelectedStocks] = useState(new Set());
+  const [nifty50Data, setNifty50Data] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
 
   useEffect(() => {
     fetch("http://localhost:8000/stocks")
       .then((res) => res.json())
-      .then((data) => setStocks(data.stock_prices))
+      .then((data) => {
+        setStocks(data.stock_prices);
+        if (data.nifty_prices) {
+          setNifty50Data(formatChartData(data.nifty_prices));
+        }
+      })
       .catch((error) => console.error(error));
   }, []);
 
@@ -32,43 +49,28 @@ const HistoricalDataPage = () => {
     return <div>Loading...</div>;
   }
 
-  const formatChartData = (stockData) =>
-    stockData.map((data) => ({
-      date: new Date(data.date).toLocaleDateString(),
-      open: data.open,
-      close: data.close,
-      volume: data.volume,
-    }));
-
-  const chartConfig = {
-    close: {
-      label: "Closing Price",
-      color: "hsl(var(--chart-1))",
-    },
-    volume: {
-      label: "Volume",
-      color: "hsl(var(--chart-2))",
-    },
-  };
-
   const handleStockClick = (stockSymbol) => {
-    if (selectedStocks.includes(stockSymbol)) {
-      setSelectedStocks(
-        selectedStocks.filter((symbol) => symbol !== stockSymbol)
-      );
-    } else if (selectedStocks.length < 15) {
-      setSelectedStocks([...selectedStocks, stockSymbol]);
-    }
+    setSelectedStocks((prev) => {
+      const selectedSet = new Set(prev);
+      if (selectedSet.has(stockSymbol)) {
+        selectedSet.delete(stockSymbol);
+      } else if (selectedSet.size < 15) {
+        selectedSet.add(stockSymbol);
+      }
+      return selectedSet;
+    });
   };
+
+  const filteredStocks = Object.keys(stocks).filter((stockSymbol) =>
+    stockSymbol.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+  );
 
   return (
     <div className="p-10 mx-auto">
-      <div class="flex justify-between">
-        <h1 className="text-3xl font-bold mb-6 text-white">
-          Historical Stock Data
-        </h1>
-        {selectedStocks.length && (
-          <Link href={`/stocks/${selectedStocks.join(",")}`}>
+      <div className="flex justify-between mb-6">
+        <h1 className="text-3xl font-bold text-white">Historical Stock Data</h1>
+        {selectedStocks.size > 0 && (
+          <Link href={`/stocks/${Array.from(selectedStocks).join(",")}`}>
             <Button variant="secondary" className="font-bold text-lg">
               Continue with selected stocks?
             </Button>
@@ -76,62 +78,108 @@ const HistoricalDataPage = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        {Object.keys(stocks).map((stockSymbol) => {
-          const isSelected = selectedStocks.includes(stockSymbol);
+      <input
+        type="text"
+        placeholder="Search stocks..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="mb-6 p-3 rounded-lg bg-[#131212] text-[#fefffe] border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#2ea583] focus:border-transparent transition-all duration-200"
+      />
 
-          return (
-            <Card
-              key={stockSymbol}
-              className={`mb-4 bg-[#2d353d] ${
-                isSelected ? "border-2 border-[#2ea583]" : "border-0"
-              }`}
-              onClick={() => handleStockClick(stockSymbol)}
-              style={{ cursor: "pointer" }}
-            >
-              <CardHeader>
-                <CardTitle class="text-white font-bold text-lg">
-                  {stockSymbol}
-                </CardTitle>
-                <CardDescription class="text-slate-800 font-semibold text-md">
-                  {stockSymbol}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer config={chartConfig}>
-                  <AreaChart
-                    accessibilityLayer
-                    data={formatChartData(stocks[stockSymbol])}
-                    margin={{ left: 12, right: 12 }}
-                  >
-                    <CartesianGrid vertical={false} />
-                    <XAxis
-                      dataKey="date"
-                      tickLine={false}
-                      axisLine={false}
-                      tickMargin={8}
-                    />
-                    <YAxis />
-                    <ChartTooltip
-                      cursor={false}
-                      content={<ChartTooltipContent indicator="line" />}
-                    />
-                    <Area
-                      dataKey="close"
-                      type="monotone"
-                      fill="var(--color-close)"
-                      fillOpacity={0.4}
-                      stroke="var(--color-close)"
-                    />
-                  </AreaChart>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-          );
-        })}
+      {nifty50Data.length > 0 && (
+        <div className="mb-6">
+          <Card className="bg-[#111111] border-0">
+            <CardHeader>
+              <CardTitle className="text-white font-bold text-lg">Nifty50</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer
+                config={{ close: { label: "Close", color: "#0a632d" } }}
+                className="h-64 w-full"
+              >
+                <AreaChart data={nifty50Data} margin={{ left: 0, right: 0 }}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
+                  <YAxis />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent indicator="line" />}
+                  />
+                  <Area
+                    dataKey="close"
+                    type="monotone"
+                    fill="#0a632d"
+                    fillOpacity={0.4}
+                    stroke="#0a632d"
+                  />
+                </AreaChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {filteredStocks.map((stockSymbol) => (
+          <StockCard
+            key={stockSymbol}
+            stockSymbol={stockSymbol}
+            stockData={stocks[stockSymbol]}
+            isSelected={selectedStocks.has(stockSymbol)}
+            onClick={() => handleStockClick(stockSymbol)}
+          />
+        ))}
       </div>
     </div>
   );
 };
+
+const StockCard = memo(({ stockSymbol, stockData, isSelected, onClick }) => {
+  const formattedData = useMemo(() => formatChartData(stockData), [stockData]);
+  const lastDayPrice = formattedData[formattedData.length - 1]?.close;
+  const previousDayPrice = formattedData[formattedData.length - 2]?.close;
+
+  const areaColor = lastDayPrice > previousDayPrice ? "#0a632d" : "#a21a39";
+
+  return (
+    <Card
+      className={`mb-4 bg-[#111111] ${isSelected ? "border-2 border-[#2ea583]" : "border-0"}`}
+      onClick={onClick}
+      style={{ cursor: "pointer" }}
+    >
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-white font-bold text-lg">{stockSymbol}</CardTitle>
+          <span className="bg-[#2ea583] text-white text-xs font-semibold px-2 rounded">
+            Nifty 50
+          </span>
+        </div>
+        <CardDescription className="text-slate-800 font-semibold text-md">
+          {stockSymbol.split(" ").map((word) => word.charAt(0)).join("")}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={{ close: { label: "Close", color: areaColor } }}>
+          <AreaChart data={formattedData} margin={{ left: 0, right: 0 }}>
+            <CartesianGrid vertical={false} />
+            <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
+            <YAxis />
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent indicator="line" />}
+            />
+            <Area
+              dataKey="close"
+              type="monotone"
+              fill={areaColor}
+              fillOpacity={0.4}
+              stroke={areaColor}
+            />
+          </AreaChart>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  );
+});
 
 export default HistoricalDataPage;

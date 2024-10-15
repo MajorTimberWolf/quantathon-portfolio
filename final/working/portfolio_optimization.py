@@ -30,7 +30,7 @@ def optimize_portfolio_with_quantum_walk(stock_prices, total_investment, steps=2
 
     # Simulate the circuit
     simulator = cirq.Simulator()
-    result = simulator.run(circuit, repetitions=5000)  # Increase repetitions to reduce variance
+    result = simulator.run(circuit, repetitions=50000)  # Increase repetitions to reduce variance
     measurements = result.measurements['position']
 
     # Process measurements to get probabilities for each stock

@@ -1,8 +1,7 @@
-// InvestmentDistributionPieChart.js
 "use client";
 
 import * as React from "react";
-import { Label, Pie, PieChart } from "recharts";
+import { Label, Pie, PieChart, ResponsiveContainer } from "recharts";
 import {
   Card,
   CardContent,
@@ -45,72 +44,78 @@ export function InvestmentDistributionPieChart({
   });
 
   return (
-    <Card className="flex flex-col shadow-lg border border-gray-700 rounded-lg transition-all duration-300 transform hover:scale-105 bg-gray-900">
+    <Card className="flex flex-col h-full shadow-lg border border-gray-700 rounded-lg transition-all duration-300 transform hover:scale-105 bg-[#1a1a1a] text-white">
       <CardHeader className="items-start pb-3 px-6">
-        <CardTitle className="text-2xl font-semibold mb-1 text-white">
+        <CardTitle className="text-2xl font-semibold mb-1">
           Investment Distribution
         </CardTitle>
-        <CardDescription className="text-sm text-muted-foreground">
+        <CardDescription className="text-sm text-gray-400">
           Allocation by sector
         </CardDescription>
       </CardHeader>
 
       <CardContent className="flex-1 pb-4 px-6">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[300px] mb-4"
-        >
-          <PieChart margin={{ left: 0, right: 0, top: 5 }}>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent />}
-            />
-            <Pie
-              data={chartData}
-              dataKey="investment"
-              nameKey="sector"
-              innerRadius={60}
-              outerRadius={80}
-              strokeWidth={4}
-              stroke="#1f2937"
-              labelLine={false}
-            >
-              <Label
-                content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    return (
-                      <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        <tspan
-                          x={viewBox.cx}
-                          y={viewBox.cy}
-                          className="fill-white text-4xl font-bold"
-                        >
-                          {totalInvestment.toLocaleString()}
-                        </tspan>
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-white text-sm text-white"
-                        >
-                          Investment
-                        </tspan>
-                      </text>
-                    );
-                  }
-                }}
-              />
-            </Pie>
-          </PieChart>
-        </ChartContainer>
+        <div className="w-full h-[calc(100vh-300px)] min-h-[400px] max-h-[600px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <ChartContainer config={chartConfig}>
+              <PieChart>
+                <ChartTooltip
+                  cursor={true}
+                  content={<ChartTooltipContent className="bg-gray-800 text-white" />}
+                />
+                <Pie
+                  data={chartData}
+                  dataKey="investment"
+                  nameKey="sector"
+                  innerRadius="40%"
+                  outerRadius="80%"
+                  strokeWidth={4}
+                  stroke="#1f2937"
+                  labelLine={false}
+                >
+                  <Label
+                    content={({ viewBox }) => {
+                      if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                        const centerX = viewBox.cx;
+                        const centerY = viewBox.cy;
+                        const radius = Math.min(centerX, centerY);
+                        
+                        return (
+                          <g>
+                            <text
+                              x={centerX}
+                              y={centerY}
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                              className="fill-white font-bold"
+                              style={{ fontSize: `${radius * 0.2}px` }}
+                            >
+                              {totalInvestment.toLocaleString()}
+                            </text>
+                            <text
+                              x={centerX}
+                              y={centerY + radius * 0.15}
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                              className="fill-white"
+                              style={{ fontSize: `${radius * 0.1}px` }}
+                            >
+                              Investment
+                            </text>
+                          </g>
+                        );
+                      }
+                    }}
+                  />
+                </Pie>
+              </PieChart>
+            </ChartContainer>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
 
       <CardFooter className="flex-col gap-2 px-6 text-sm">
-        <div className="leading-none text-muted-foreground">
+        <div className="leading-none text-gray-400">
           Showing total investment distribution by sector
         </div>
       </CardFooter>

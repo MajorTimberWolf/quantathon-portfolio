@@ -1,8 +1,6 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
-
 import {
   Card,
   CardContent,
@@ -63,11 +61,9 @@ export function HistoricalPricesLineChart({ data, stockColors }) {
   }, {});
 
   return (
-    <Card className="bg-gray-900 border border-gray-800 rounded-lg shadow-md">
+    <Card className="bg-[#1a1a1a] text-white border border-gray-700 rounded-lg shadow-lg">
       <CardHeader className="px-6">
-        <CardTitle className="text-lg text-white">
-          Normalized Historical Prices
-        </CardTitle>
+        <CardTitle className="text-2xl font-semibold">Normalized Historical Prices</CardTitle>
         <CardDescription className="text-sm text-gray-400">
           Last 6 months
         </CardDescription>

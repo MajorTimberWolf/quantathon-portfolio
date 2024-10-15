@@ -1,11 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Loading from "@/components/Loading";
 import { InvestmentDistributionPieChart } from "./PieChart";
 import { HistoricalPricesLineChart } from "./LineChart";
 import { QuantumWalkWeightsBarChart } from "./BarChart";
+import { MultipleQuantumWalkWeightsBarCharts } from "./BarsChart";
 import { InfoChart } from "./InfoChart";
 import StockDistributionExplanation from "./StockDistributionExplanation";
+import { Button } from "@/components/ui/button";
+import randomColor from "randomcolor";
 
 export default function Page({ searchParams: { investment, risk, stocks } }) {
   const [optimizedWeights, setOptimizedWeights] = useState([]);
@@ -16,6 +20,12 @@ export default function Page({ searchParams: { investment, risk, stocks } }) {
   const [totalInvestment, setTotalInvestment] = useState(0);
   const [stockColors, setStockColors] = useState({});
   const [stockData, setStockData] = useState([]);
+  const [weights, setWeightData] = useState([]);
+  const [showFirstChart, setShowFirstChart] = useState(true);
+
+  const handleToggle = () => {
+    setShowFirstChart((prev) => !prev);
+  };
 
   useEffect(() => {
     const decodedStocks = decodeURIComponent(stocks).split(",");
@@ -44,18 +54,15 @@ export default function Page({ searchParams: { investment, risk, stocks } }) {
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
 
-      console.log(Object.keys(data));
-
       setOptimizedWeights(data.optimized_weights);
       setInvestmentAmounts(data.investment_amounts);
       setNormalizedStockPrices(data.normalized_stock_prices);
-      setTotalInvestment(
-        data.investment_amounts
-      );
+      setTotalInvestment(data.investment_amounts);
+      setWeightData(data.all_weights);
 
       const sampleStockData = decodedStocks.map((stock) => ({
         name: stock,
-        description: `The stock ${stock} is expected to have a distribution based on market analysis and trends.`
+        description: `The stock ${stock} is expected to have a distribution based on market analysis and trends.`,
       }));
       setStockData(sampleStockData);
     } catch (error) {
@@ -69,20 +76,23 @@ export default function Page({ searchParams: { investment, risk, stocks } }) {
   const generateRandomColors = (stocks) => {
     const colors = {};
     stocks.forEach((stock) => {
-      colors[stock] = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+      colors[stock] = randomColor();
     });
     return colors;
   };
 
-  if (loading) return <div className="text-white">Loading...</div>;
+  if (loading) return <Loading message="Please Wait..." />;
 
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
-    <div className="flex flex-col items-center gap-8 p-10 bg-gray-900 text-white">
-      <h1 className="text-4xl font-bold text-center mb-6">Quantathon Results</h1>
-      <div className="flex flex-col lg:flex-row items-stretch w-full max-w-6xl gap-8">
-        <div className="flex-1 bg-gray-800 p-4 rounded-lg shadow-lg">
+    <div className="container mx-auto py-12 px-8 bg-[#121212] text-white">
+      <h1 className="text-5xl font-bold mb-8 text-center">
+        Suggested Investment Portfolio
+      </h1>
+
+      <div className="flex flex-col lg:flex-row items-stretch gap-8 mb-8">
+        <div className="flex-1 bg-[#1a1a1a] p-4 rounded-lg shadow-lg">
           <InvestmentDistributionPieChart
             data={investmentAmounts}
             normalized_stock_prices={normalizedStockPrices}
@@ -90,7 +100,7 @@ export default function Page({ searchParams: { investment, risk, stocks } }) {
           />
         </div>
 
-        <div className="flex-1 bg-gray-800 p-4 rounded-lg shadow-lg">
+        <div className="flex-1 bg-[#1a1a1a] p-4 rounded-lg shadow-lg">
           <InfoChart
             investmentAmounts={investmentAmounts}
             normalizedStockPrices={normalizedStockPrices}
@@ -99,8 +109,8 @@ export default function Page({ searchParams: { investment, risk, stocks } }) {
         </div>
       </div>
 
-      <div className="flex flex-col w-full max-w-6xl gap-8">
-        <div className="flex-1 bg-gray-800 p-4 rounded-lg shadow-lg">
+      <div className="flex flex-col w-full mb-8">
+        <div className="flex-1 bg-[#1a1a1a] p-4 rounded-lg shadow-lg">
           <HistoricalPricesLineChart
             data={normalizedStockPrices}
             stockColors={stockColors}
@@ -108,16 +118,29 @@ export default function Page({ searchParams: { investment, risk, stocks } }) {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row items-center w-full max-w-6xl gap-8">
-        <div className="flex-1 bg-gray-800 p-4 rounded-lg shadow-lg">
-          <QuantumWalkWeightsBarChart
-            data={optimizedWeights}
-            colors={stockColors}
-          />
+      <div className="flex flex-col lg:flex-row items-center w-full mb-8">
+        <div className="flex-1 bg-[#1a1a1a] p-4 rounded-lg shadow-lg">
+          <Button onClick={handleToggle} className="mb-4">
+            {showFirstChart
+              ? "Show Multiple Weights Chart"
+              : "Show Quantum Walk Weights Chart"}
+          </Button>
+
+          {showFirstChart ? (
+            <QuantumWalkWeightsBarChart
+              data={optimizedWeights}
+              colors={stockColors}
+            />
+          ) : (
+            <MultipleQuantumWalkWeightsBarCharts
+              data={weights}
+              colors={stockColors}
+            />
+          )}
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row items-center w-full max-w-6xl gap-8">
+      <div className="flex flex-col lg:flex-row items-center w-full">
         <StockDistributionExplanation stockData={stockData} />
       </div>
     </div>

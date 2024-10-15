@@ -2,7 +2,7 @@ import React from "react";
 
 const StockDistributionExplanation = ({ stockData }) => {
   return (
-    <div className="flex-1 bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700">
+    <div className="flex-1 bg-[#1a1a1a] p-6 rounded-lg shadow-lg border border-gray-700">
       <h2 className="text-2xl font-bold text-white mb-4">Stock Distribution Explanation</h2>
       <p className="text-sm text-gray-400 mb-4">
         The following explanation outlines why the stock distributions are

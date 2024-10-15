@@ -1,6 +1,13 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, XAxis, LabelList } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  LabelList,
+} from "recharts";
 import {
   Card,
   CardContent,
@@ -10,33 +17,37 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-export function QuantumWalkWeightsBarChart({ data, colors }) {
-  const chartData = data.map((weight, index) => ({
-    company: Object.keys(colors)[index],
-    weight,
-    fill: colors[Object.keys(colors)[index]],
-  }));
+export function MultipleQuantumWalkWeightsBarCharts({ data, colors }) {
+  const chartData = data[0].map((_, index) => {
+    const entry = { index };
+    data.forEach((weights, companyIndex) => {
+      entry[Object.keys(colors)[companyIndex]] = weights[index];
+    });
+    return entry;
+  });
 
-  const chartConfig = {};
+  console.log({ chartData });
 
+  let chartConfig = {};
   chartData.forEach((data) => {
-    chartConfig[data.company] = {
-      label: data.company,
+    chartConfig[data.index] = {
+      label: data.index,
     };
   });
 
   return (
     <Card className="bg-[#1a1a1a] text-white border border-gray-700 rounded-lg shadow-lg">
       <CardHeader className="px-6">
-        <CardTitle className="text-3xl font-semibold">Quantum Walk Weights</CardTitle>
+        <CardTitle className="text-3xl font-semibold">
+          Quantum Walk Weights
+        </CardTitle>
         <CardDescription className="text-sm text-gray-400">
-          Per company weights
+          Weights per company
         </CardDescription>
       </CardHeader>
       <CardContent className="px-6 py-4">
@@ -48,26 +59,26 @@ export function QuantumWalkWeightsBarChart({ data, colors }) {
               stroke="#4B5563"
             />
             <XAxis
-              dataKey="company"
+              dataKey="index"
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              stroke="#9CA3AF"
             />
+            <YAxis />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            <Bar
-              dataKey="weight"
-              fill={({ index }) => chartData[index].fill}
-              radius={8}
-            >
-              <LabelList
-                dataKey="weight"
-                position="top"
-                offset={12}
-                className="fill-white"
-                fontSize={12}
-              />
-            </Bar>
+
+            {Object.keys(colors).map((key) => (
+              <Bar key={key} dataKey={key} fill={colors[key]} radius={4}>
+                <LabelList
+                  dataKey={key}
+                  position="insideMiddle"
+                  offset={12}
+                  className="fill-white"
+                  fontSize={12}
+                  angle={-90}
+                />
+              </Bar>
+            ))}
           </BarChart>
         </ChartContainer>
       </CardContent>
