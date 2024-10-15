@@ -1,5 +1,6 @@
 import numpy as np
 import cirq
+from scipy.optimize import minimize
 
 def construct_adjacency_matrix(returns):
     correlation_matrix = np.corrcoef(returns, rowvar=False)
@@ -149,9 +150,92 @@ def optimize_portfolio_with_quantum_walk(stock_prices, total_investment, steps=2
 
     return sampled_weights, investment_amounts, portfolio_cost
 
-def compare_portfolio_methods(stock_prices, total_investment, steps=25, take_more_risk=False):
+def create_qaoa_circuit(qubits, gamma, beta):
+    circuit = cirq.Circuit()
+    n = len(qubits)
+
+    
+    for i in range(n):
+        circuit.append(cirq.rx(2 * gamma)(qubits[i]))
+
+    
+    for i in range(n):
+        circuit.append(cirq.rx(2 * beta)(qubits[i]))
+
+    return circuit
+
+def qaoa_cost_function(params, qubits, returns, risk_factors, risk_tolerance):
+    n = len(qubits)
+    p = len(params) // 2
+    gammas = params[:p]
+    betas = params[p:]
+
+    circuit = cirq.Circuit()
+    for qubit in qubits:
+        circuit.append(cirq.H(qubit))
+
+    for i in range(p):
+        circuit += create_qaoa_circuit(qubits, gammas[i], betas[i])
+
+    circuit.append(cirq.measure(*qubits, key='result'))
+
+    simulator = cirq.Simulator()
+    result = simulator.run(circuit, repetitions=1000)
+    measurements = result.measurements['result']
+
+    weights = np.mean(measurements, axis=0)
+    weights = weights / np.sum(weights)
+
+    return cost(weights, returns, risk_factors, risk_tolerance)
+
+def optimize_portfolio_with_qaoa(stock_prices, total_investment, steps=25, risk_tolerance=0.5):
+    returns = stock_prices.pct_change().dropna().values
+    num_stocks = returns.shape[1]
+
+    fluctuation = stock_prices.pct_change().std().values
+    risk_factors = fluctuation / np.max(fluctuation)
+
+    qubits = [cirq.NamedQubit(f'q{i}') for i in range(num_stocks)]
+
+    p = steps  # Number of QAOA steps
+    initial_params = np.random.rand(2 * p)
+
+    result = minimize(
+        lambda params: qaoa_cost_function(params, qubits, returns, risk_factors, risk_tolerance),
+        initial_params,
+        method='COBYLA',
+        options={'maxiter': 100}
+    )
+
+    optimized_params = result.x
+    gammas = optimized_params[:p]
+    betas = optimized_params[p:]
+
+    circuit = cirq.Circuit()
+    for qubit in qubits:
+        circuit.append(cirq.H(qubit))
+
+    for i in range(p):
+        circuit += create_qaoa_circuit(qubits, gammas[i], betas[i])
+
+    circuit.append(cirq.measure(*qubits, key='result'))
+
+    simulator = cirq.Simulator()
+    result = simulator.run(circuit, repetitions=1000)
+    measurements = result.measurements['result']
+
+    weights = np.mean(measurements, axis=0)
+    weights = weights / np.sum(weights)
+
+    investment_amounts = weights * total_investment
+    portfolio_cost = cost(weights, returns, risk_factors, risk_tolerance)
+
+    return weights, investment_amounts, portfolio_cost
+
+def compare_portfolio_methods(stock_prices, total_investment, steps=25, take_more_risk=False, risk_tolerance=0.5):
     weights_hadamard, investments_hadamard, cost_hadamard = optimize_portfolio_with_hadamard_test(stock_prices, total_investment, steps, take_more_risk)
     weights_walk, investments_walk, cost_walk = optimize_portfolio_with_quantum_walk(stock_prices, total_investment, steps, take_more_risk)
+    weights_qaoa, investments_qaoa, cost_qaoa = optimize_portfolio_with_qaoa(stock_prices, total_investment, steps, risk_tolerance)
 
     print("Hadamard Test Weights:", weights_hadamard)
     print("Hadamard Test Investments:", investments_hadamard)
@@ -161,18 +245,19 @@ def compare_portfolio_methods(stock_prices, total_investment, steps=25, take_mor
     print("Quantum Walk Investments:", investments_walk)
     print("Quantum Walk Cost:", cost_walk)
 
-    
-    if cost_hadamard < cost_walk:
+    print("QAOA Weights:", weights_qaoa)
+    print("QAOA Investments:", investments_qaoa)
+    print("QAOA Cost:", cost_qaoa)
+
+    costs = [cost_hadamard, cost_walk, cost_qaoa]
+    min_cost_index = np.argmin(costs)
+
+    if min_cost_index == 0:
         print("Choosing Hadamard Test Portfolio")
         return weights_hadamard, investments_hadamard, cost_hadamard
-    else:
+    elif min_cost_index == 1:
         print("Choosing Quantum Walk Portfolio")
         return weights_walk, investments_walk, cost_walk
-
-
-
-
-
-
-
-
+    else:
+        print("Choosing QAOA Portfolio")
+        return weights_qaoa, investments_qaoa, cost_qaoa

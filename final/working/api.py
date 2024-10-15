@@ -1,48 +1,71 @@
 import time
 import numpy as np
-import pandas as pd
 from fastapi import FastAPI
-from portfolio_optimization import compare_portfolio_methods
+from portfolio_optimization import compare_portfolio_methods, optimize_portfolio_with_hadamard_test, optimize_portfolio_with_quantum_walk, optimize_portfolio_with_qaoa
 import json
 from data_loader import load_historical_stock_data, normalize_stock_prices
 
 def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
+    
     @app.get("/optimize")
-    def optimize_route(amount: float = 1000, risk: float = 0.1, stocks: str = "TATA STEEL LIMITED"):
+    def optimize_route(amount: float = 1000, risk: float = 0.1, method: str = "quantum_walk", stocks: str = "TATA STEEL LIMITED"):
+        """
+        Optimize portfolio using the specified method.
+        :param amount: Total investment amount
+        :param risk: Risk tolerance (default = 0.1, 0 to 1 scale)
+        :param method: Optimization method to use ('hadamard', 'quantum_walk', 'qaoa')
+        :param stocks: Comma-separated stock symbols to include in optimization
+        """
         time_start = time.time()
-        weights, amounts = [], []
-        runs = 5
+
+        
         input_stocks = stocks.split(",")
         print("Selected stocks:", input_stocks)
 
         filtered_stock_prices = stock_prices[input_stocks]
 
+        
         normalized_stock_prices = filtered_stock_prices / filtered_stock_prices.iloc[0]
 
-        for _ in range(runs):
-            optimized_weights, investment_amounts, cost = compare_portfolio_methods(filtered_stock_prices, total_investment=amount, steps=35, take_more_risk=True if risk > 0.5 else False)
+        if method == "hadamard":
+           
+            optimized_weights, investment_amounts, cost = optimize_portfolio_with_hadamard_test(
+                filtered_stock_prices, total_investment=amount, steps=35, take_more_risk=True if risk > 0.5 else False
+            )
+        elif method == "quantum_walk":
+            
+            optimized_weights, investment_amounts, cost = optimize_portfolio_with_quantum_walk(
+                filtered_stock_prices, total_investment=amount, steps=35, take_more_risk=True if risk > 0.5 else False
+            )
+        elif method == "qaoa":
+            
+            optimized_weights, investment_amounts, cost = optimize_portfolio_with_qaoa(
+                filtered_stock_prices, total_investment=amount, steps=35, risk_tolerance=risk
+            )
+        else:
+            return {"error": "Invalid optimization method. Choose 'hadamard', 'quantum_walk', or 'qaoa'."}
 
-            print("Optimized Weights:", optimized_weights)
-            print("Investment Amounts:", investment_amounts)
-
-            weights.append(optimized_weights.tolist())
-            amounts.append(investment_amounts.tolist())
-
-        average_optimized_weights = np.mean(weights, axis=0)
-        average_investment_amounts = np.mean(amounts, axis=0)
+        print(f"Optimized Weights ({method}):", optimized_weights)
+        print(f"Investment Amounts ({method}):", investment_amounts)
+        print(f"Cost ({method}):", cost)
         print("Time taken:", time.time() - time_start, "seconds")
 
         return {
-            "optimized_weights": average_optimized_weights.tolist(),
-            "investment_amounts": average_investment_amounts.tolist(),
+            "optimized_weights": optimized_weights.tolist(),
+            "investment_amounts": investment_amounts.tolist(),
+            "cost": cost,
             "normalized_stock_prices": normalized_stock_prices.to_dict(),
-            "all_weights": weights,
             "stock_prices": stock_prices.to_dict(),
-            "message": "Optimization and visualization completed."
+            "message": f"Optimization using {method} completed successfully."
         }
+
+
 
     @app.get("/stocks")
     def stocks_route():
+        """
+        Endpoint to get stock prices and Nifty data.
+        """
         with open("historical.json", "r") as f:
             historical_data = f.read()
             new_historical_data = {}
@@ -60,9 +83,12 @@ def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
             "nifty_prices": nifty_data,
             "message": "Stock prices and Nifty data retrieved."
         }
-    
+
     @app.get("/nifty")
     def nifty_route():
+        """
+        Endpoint to get Nifty data.
+        """
         nifty_data = load_historical_stock_data('nifty.json')
         normalized_nifty_data = normalize_stock_prices(nifty_data)
         return {
