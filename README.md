@@ -69,7 +69,7 @@ The frontend will be available at `http://localhost:3000` (or another port if 30
 
 ## License
 
-Check LICENSE.MD for more details.
+Check [LICENSE](https://github.com/MajorTimberWolf/quantathon-portfolio/blob/main/LICENSE) for more details.
 
 ## Acknowledgments
 
