@@ -13,6 +13,9 @@ const StockPage = ({ params: { selectedStocks } }) => {
   const [stocks, setStocks] = useState([]);
   const [availableStocks, setAvailableStocks] = useState([]);
   const [allStocks, setAllStocks] = useState([]);
+  const [selectedMethod, setSelectedMethod] = useState(""); 
+
+  const methods = ["hadamard", "quantum_walk", "qaoa", "classical", "compare"];
 
   useEffect(() => {
     const fetchStocks = async () => {
@@ -141,12 +144,24 @@ const StockPage = ({ params: { selectedStocks } }) => {
                     : "High Risk: Higher potential returns with increased volatility."}
                 </span>
               </div>
+
+              <div className="flex space-x-2">
+                {methods.map((method) => (
+                  <Button
+                    key={method}
+                    variant={selectedMethod === method ? "outline" : "default"}
+                    onClick={() => setSelectedMethod(method)}
+                  >
+                    {method}
+                  </Button>
+                ))}
+              </div>
             </div>
 
             <Link
               href={`/results?investment=${investment}&risk=${risk}&stocks=${encodeURIComponent(
                 stocks.join(",")
-              )}`}
+              )}&method=${encodeURIComponent(selectedMethod)}`} // Append method
             >
               <Button className="w-full bg-[#2ea583] text-[#121212] hover:bg-[#28a374] rounded-lg py-3 text-lg font-semibold">
                 Generate Suggestions

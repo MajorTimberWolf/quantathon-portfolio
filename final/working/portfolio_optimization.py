@@ -197,7 +197,7 @@ def optimize_portfolio_with_qaoa(stock_prices, total_investment, steps=25, risk_
 
     qubits = [cirq.NamedQubit(f'q{i}') for i in range(num_stocks)]
 
-    p = steps  # Number of QAOA steps
+    p = steps
     initial_params = np.random.rand(2 * p)
 
     result = minimize(
@@ -232,11 +232,42 @@ def optimize_portfolio_with_qaoa(stock_prices, total_investment, steps=25, risk_
 
     return weights, investment_amounts, portfolio_cost
 
+def classical_portfolio_optimization(returns, total_investment, risk_tolerance=0.5, regularization=10):
+    num_stocks = returns.shape[1]
+
+    def classical_cost(weights):
+        portfolio_return = np.dot(weights, returns.mean(axis=0))
+        portfolio_risk = np.sqrt(np.dot(weights.T, np.dot(np.cov(returns, rowvar=False), weights)))
+        risk_penalty = portfolio_risk * risk_tolerance
+
+        mean_weight = 1 / num_stocks
+        regularization_penalty = regularization * np.sum((weights - mean_weight) ** 2)
+
+        return -portfolio_return + risk_penalty + regularization_penalty
+
+    initial_weights = np.ones(num_stocks) / num_stocks
+    
+    bounds = [(0.8 / num_stocks, 1.2 / num_stocks) for _ in range(num_stocks)]
+    
+    constraints = {'type': 'eq', 'fun': lambda weights: np.sum(weights) - 1}
+
+    result = minimize(classical_cost, initial_weights, method='SLSQP', bounds=bounds, constraints=constraints)
+    
+    optimized_weights = result.x
+    investment_amounts = optimized_weights * total_investment
+    portfolio_cost = classical_cost(optimized_weights)
+
+    return optimized_weights, investment_amounts, portfolio_cost
+
 def compare_portfolio_methods(stock_prices, total_investment, steps=25, take_more_risk=False, risk_tolerance=0.5):
+    returns = stock_prices.pct_change().dropna().values
+    
     weights_hadamard, investments_hadamard, cost_hadamard = optimize_portfolio_with_hadamard_test(stock_prices, total_investment, steps, take_more_risk)
     weights_walk, investments_walk, cost_walk = optimize_portfolio_with_quantum_walk(stock_prices, total_investment, steps, take_more_risk)
     weights_qaoa, investments_qaoa, cost_qaoa = optimize_portfolio_with_qaoa(stock_prices, total_investment, steps, risk_tolerance)
 
+    weights_classical, investments_classical, cost_classical = classical_portfolio_optimization(returns, total_investment, risk_tolerance)
+    
     print("Hadamard Test Weights:", weights_hadamard)
     print("Hadamard Test Investments:", investments_hadamard)
     print("Hadamard Test Cost:", cost_hadamard)
@@ -248,8 +279,12 @@ def compare_portfolio_methods(stock_prices, total_investment, steps=25, take_mor
     print("QAOA Weights:", weights_qaoa)
     print("QAOA Investments:", investments_qaoa)
     print("QAOA Cost:", cost_qaoa)
+    
+    print("Classical Optimization Weights:", weights_classical)
+    print("Classical Optimization Investments:", investments_classical)
+    print("Classical Optimization Cost:", cost_classical)
 
-    costs = [cost_hadamard, cost_walk, cost_qaoa]
+    costs = [cost_hadamard, cost_walk, cost_qaoa, cost_classical]
     min_cost_index = np.argmin(costs)
 
     if min_cost_index == 0:
@@ -258,6 +293,9 @@ def compare_portfolio_methods(stock_prices, total_investment, steps=25, take_mor
     elif min_cost_index == 1:
         print("Choosing Quantum Walk Portfolio")
         return weights_walk, investments_walk, cost_walk
-    else:
+    elif min_cost_index == 2:
         print("Choosing QAOA Portfolio")
         return weights_qaoa, investments_qaoa, cost_qaoa
+    else:
+        print("Choosing Classical Portfolio")
+        return weights_classical, investments_classical, cost_classical

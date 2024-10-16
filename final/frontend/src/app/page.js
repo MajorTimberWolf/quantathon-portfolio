@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo, memo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   Card,
@@ -26,6 +26,54 @@ const formatChartData = (stockData) =>
     volume: data.volume,
   }));
 
+const StockCard = React.memo(({ stockSymbol, stockData, isSelected, onClick }) => {
+  const formattedData = useMemo(() => formatChartData(stockData), [stockData]);
+  const lastDayPrice = formattedData[formattedData.length - 1]?.close;
+  const previousDayPrice = formattedData[formattedData.length - 2]?.close;
+
+  const areaColor = lastDayPrice > previousDayPrice ? "#0a632d" : "#a21a39";
+
+  return (
+    <Card
+      className={`mb-4 bg-[#111111] ${isSelected ? "border-2 border-[#2ea583]" : "border-0"}`}
+      onClick={onClick}
+      style={{ cursor: "pointer" }}
+    >
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-white font-bold text-lg">{stockSymbol}</CardTitle>
+          <span className="bg-[#2ea583] text-white text-xs font-semibold px-2 rounded">
+            Nifty 50
+          </span>
+        </div>
+        <CardDescription className="text-slate-800 font-semibold text-md">
+          {stockSymbol.split(" ").map((word) => word.charAt(0)).join("")}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={{ close: { label: `${stockSymbol} Close`, color: areaColor } }}>
+          <AreaChart data={formattedData} margin={{ left: 0, right: 0 }}>
+            <CartesianGrid vertical={false} />
+            <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
+            <YAxis />
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent indicator="line" />}
+            />
+            <Area
+              dataKey="close"
+              type="monotone"
+              fill={areaColor}
+              fillOpacity={0.4}
+              stroke={areaColor}
+            />
+          </AreaChart>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  );
+});
+
 const HistoricalDataPage = () => {
   const [stocks, setStocks] = useState({});
   const [selectedStocks, setSelectedStocks] = useState(new Set());
@@ -45,11 +93,7 @@ const HistoricalDataPage = () => {
       .catch((error) => console.error(error));
   }, []);
 
-  if (Object.keys(stocks).length === 0) {
-    return <div>Loading...</div>;
-  }
-
-  const handleStockClick = (stockSymbol) => {
+  const handleStockClick = useCallback((stockSymbol) => {
     setSelectedStocks((prev) => {
       const selectedSet = new Set(prev);
       if (selectedSet.has(stockSymbol)) {
@@ -59,11 +103,18 @@ const HistoricalDataPage = () => {
       }
       return selectedSet;
     });
-  };
+  }, []);
 
-  const filteredStocks = Object.keys(stocks).filter((stockSymbol) =>
-    stockSymbol.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+  const filteredStocks = useMemo(() => 
+    Object.keys(stocks).filter((stockSymbol) =>
+      stockSymbol.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    ),
+    [stocks, debouncedSearchTerm]
   );
+
+  if (Object.keys(stocks).length === 0) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="p-10 mx-auto">
@@ -133,53 +184,5 @@ const HistoricalDataPage = () => {
     </div>
   );
 };
-
-const StockCard = memo(({ stockSymbol, stockData, isSelected, onClick }) => {
-  const formattedData = useMemo(() => formatChartData(stockData), [stockData]);
-  const lastDayPrice = formattedData[formattedData.length - 1]?.close;
-  const previousDayPrice = formattedData[formattedData.length - 2]?.close;
-
-  const areaColor = lastDayPrice > previousDayPrice ? "#0a632d" : "#a21a39";
-
-  return (
-    <Card
-      className={`mb-4 bg-[#111111] ${isSelected ? "border-2 border-[#2ea583]" : "border-0"}`}
-      onClick={onClick}
-      style={{ cursor: "pointer" }}
-    >
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-white font-bold text-lg">{stockSymbol}</CardTitle>
-          <span className="bg-[#2ea583] text-white text-xs font-semibold px-2 rounded">
-            Nifty 50
-          </span>
-        </div>
-        <CardDescription className="text-slate-800 font-semibold text-md">
-          {stockSymbol.split(" ").map((word) => word.charAt(0)).join("")}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={{ close: { label: `${stockSymbol} Close`, color: areaColor } }}>
-          <AreaChart data={formattedData} margin={{ left: 0, right: 0 }}>
-            <CartesianGrid vertical={false} />
-            <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
-            <YAxis />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent indicator="line" />}
-            />
-            <Area
-              dataKey="close"
-              type="monotone"
-              fill={areaColor}
-              fillOpacity={0.4}
-              stroke={areaColor}
-            />
-          </AreaChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
-  );
-});
 
 export default HistoricalDataPage;

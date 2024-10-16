@@ -1,30 +1,21 @@
 import time
 import numpy as np
 from fastapi import FastAPI
-from portfolio_optimization import compare_portfolio_methods, optimize_portfolio_with_hadamard_test, optimize_portfolio_with_quantum_walk, optimize_portfolio_with_qaoa
+from portfolio_optimization import compare_portfolio_methods, optimize_portfolio_with_hadamard_test, optimize_portfolio_with_quantum_walk, optimize_portfolio_with_qaoa, classical_portfolio_optimization
 import json
 from data_loader import load_historical_stock_data, normalize_stock_prices
 
 def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
     
     @app.get("/optimize")
-    def optimize_route(amount: float = 1000, risk: float = 0.1, method: str = "quantum_walk", stocks: str = "TATA STEEL LIMITED"):
-        """
-        Optimize portfolio using the specified method.
-        :param amount: Total investment amount
-        :param risk: Risk tolerance (default = 0.1, 0 to 1 scale)
-        :param method: Optimization method to use ('hadamard', 'quantum_walk', 'qaoa')
-        :param stocks: Comma-separated stock symbols to include in optimization
-        """
+    def optimize_route(amount: float = 1000, risk: float = 0.1, method: str = "classical", stocks: str = "TATA STEEL LIMITED"):
         time_start = time.time()
 
-        
         input_stocks = stocks.split(",")
         print("Selected stocks:", input_stocks)
 
         filtered_stock_prices = stock_prices[input_stocks]
 
-        
         normalized_stock_prices = filtered_stock_prices / filtered_stock_prices.iloc[0]
 
         if method == "hadamard":
@@ -38,9 +29,17 @@ def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
                 filtered_stock_prices, total_investment=amount, steps=35, take_more_risk=True if risk > 0.5 else False
             )
         elif method == "qaoa":
-            
             optimized_weights, investment_amounts, cost = optimize_portfolio_with_qaoa(
                 filtered_stock_prices, total_investment=amount, steps=35, risk_tolerance=risk
+            )
+        elif method == "classical":
+            returns = filtered_stock_prices.pct_change().dropna().values
+            optimized_weights, investment_amounts, cost = classical_portfolio_optimization(
+                returns, total_investment=amount, risk_tolerance=risk
+            )
+        elif method == "compare":
+            optimized_weights, investment_amounts, cost = compare_portfolio_methods(
+                filtered_stock_prices, total_investment=amount, steps=35, take_more_risk=True if risk > 0.5 else False
             )
         else:
             return {"error": "Invalid optimization method. Choose 'hadamard', 'quantum_walk', or 'qaoa'."}
@@ -60,12 +59,8 @@ def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
         }
 
 
-
     @app.get("/stocks")
     def stocks_route():
-        """
-        Endpoint to get stock prices and Nifty data.
-        """
         with open("historical.json", "r") as f:
             historical_data = f.read()
             new_historical_data = {}
@@ -86,9 +81,6 @@ def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
 
     @app.get("/nifty")
     def nifty_route():
-        """
-        Endpoint to get Nifty data.
-        """
         nifty_data = load_historical_stock_data('nifty.json')
         normalized_nifty_data = normalize_stock_prices(nifty_data)
         return {

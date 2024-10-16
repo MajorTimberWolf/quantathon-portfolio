@@ -11,7 +11,7 @@ import StockDistributionExplanation from "./StockDistributionExplanation";
 import { Button } from "@/components/ui/button";
 import randomColor from "randomcolor";
 
-export default function Page({ searchParams: { investment, risk, stocks } }) {
+export default function Page({ searchParams: { investment, risk, stocks, method } }) {
   const [optimizedWeights, setOptimizedWeights] = useState([]);
   const [investmentAmounts, setInvestmentAmounts] = useState([]);
   const [normalizedStockPrices, setNormalizedStockPrices] = useState({});
@@ -32,42 +32,37 @@ export default function Page({ searchParams: { investment, risk, stocks } }) {
     const colors = generateRandomColors(decodedStocks);
     setStockColors(colors);
 
-    if (investment && risk) {
-      fetchOptimizedData(investment, risk, decodedStocks);
-    } else {
-      setError("Invalid parameters");
-      setLoading(false);
-    }
-  }, [investment, risk, stocks]);
+    const fetchOptimizedData = async () => {
+      if (investment && risk) {
+        try {
+          const response = await fetch(
+            `http://localhost:8000/optimize?amount=${investment}&risk=${risk}&stocks=${decodedStocks.join(
+              ","
+            )}&method=${method}`
+          );
+          if (!response.ok) throw new Error("Network response was not ok");
+          const data = await response.json();
 
-  const fetchOptimizedData = async (
-    investmentAmount,
-    riskAmount,
-    decodedStocks
-  ) => {
-    try {
-      const response = await fetch(
-        `http://localhost:8000/optimize?amount=${investmentAmount}&risk=${riskAmount}&stocks=${decodedStocks.join(
-          ","
-        )}`
-      );
-      if (!response.ok) throw new Error("Network response was not ok");
-      const data = await response.json();
+          setOptimizedWeights(data.optimized_weights);
+          setInvestmentAmounts(data.investment_amounts);
+          setNormalizedStockPrices(data.normalized_stock_prices);
+          setTotalInvestment(data.investment_amounts);
+          setWeightData(data.all_weights);
+          setStockData(decodedStocks);
+        } catch (error) {
+          console.error("Error fetching optimized data:", error);
+          setError("Failed to fetch data from the server");
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setError("Invalid parameters");
+        setLoading(false);
+      }
+    };
 
-      setOptimizedWeights(data.optimized_weights);
-      setInvestmentAmounts(data.investment_amounts);
-      setNormalizedStockPrices(data.normalized_stock_prices);
-      setTotalInvestment(data.investment_amounts);
-      setWeightData(data.all_weights);
-
-      setStockData(decodedStocks);
-    } catch (error) {
-      console.error("Error fetching optimized data:", error);
-      setError("Failed to fetch data from the server");
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchOptimizedData();
+  }, [investment, risk, stocks, method]);
 
   const generateRandomColors = (stocks) => {
     const colors = {};
