@@ -144,7 +144,7 @@ export default function Page({
 
       <div className="flex flex-col lg:flex-row items-center w-full">
         <StockDistributionExplanation
-          // stockData={stockData}
+          stockData={stockData}
           optimizedWeights={optimizedWeights}
           investmentAmounts={investmentAmounts}
         />
