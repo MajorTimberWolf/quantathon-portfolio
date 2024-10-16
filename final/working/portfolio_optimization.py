@@ -258,119 +258,12 @@ def classical_portfolio_optimization(returns, total_investment, risk_tolerance=0
 
     return optimized_weights, investment_amounts, portfolio_cost
 
-def quantum_mutual_information(density_matrix, i, j):
-    n = int(np.log2(density_matrix.shape[0]))
-    rho_i = partial_trace(density_matrix, [k for k in range(n) if k != i])
-    rho_j = partial_trace(density_matrix, [k for k in range(n) if k != j])
-    rho_ij = partial_trace(density_matrix, [k for k in range(n) if k != i and k != j])
-    
-    s_i = von_neumann_entropy(rho_i)
-    s_j = von_neumann_entropy(rho_j)
-    s_ij = von_neumann_entropy(rho_ij)
-    
-    return s_i + s_j - s_ij
-
-def von_neumann_entropy(density_matrix):
-    eigenvalues = np.linalg.eigvalsh(density_matrix)
-    eigenvalues = eigenvalues[eigenvalues > 0]
-    return -np.sum(eigenvalues * np.log2(eigenvalues))
-
-def partial_trace(density_matrix, keep):
-    n = int(np.log2(density_matrix.shape[0]))
-    keep = np.asarray(keep)
-    dims = [2] * n
-    dimkeep = dims.copy()
-    
-    for i in range(n):
-        if i not in keep:
-            dimkeep[i] = 1
-    
-    rho = density_matrix.reshape(dimkeep + dims)
-    return np.trace(rho, axis1=n, axis2=2*n-1).reshape([2**len(keep)] * 2)
-
-def construct_density_matrix(returns):
-    num_stocks = returns.shape[1]
-    qubits = [cirq.NamedQubit(f'q{i}') for i in range(num_stocks)]
-    
-    circuit = cirq.Circuit()
-    
-    # Prepare the initial state based on returns
-    for i, qubit in enumerate(qubits):
-        angle = np.arctan2(returns[:, i].mean(), returns[:, i].std())
-        circuit.append(cirq.ry(angle)(qubit))
-    
-    # Add entangling operations
-    for i in range(num_stocks):
-        for j in range(i+1, num_stocks):
-            circuit.append(cirq.CNOT(qubits[i], qubits[j]))
-            circuit.append(cirq.rz(np.pi/4)(qubits[j]))
-            circuit.append(cirq.CNOT(qubits[i], qubits[j]))
-    
-    # Simulate the circuit to get the final state
-    simulator = cirq.Simulator()
-    result = simulator.simulate(circuit)
-    state_vector = result.final_state_vector
-    
-    # Construct the density matrix
-    density_matrix = np.outer(state_vector, np.conj(state_vector))
-    return density_matrix
-
-def advanced_cost(weights, returns, risk_factors, risk_tolerance, density_matrix):
-    portfolio_return = np.dot(weights, returns.mean(axis=0))
-    portfolio_risk = np.sqrt(np.dot(weights.T, np.dot(np.cov(returns, rowvar=False), weights)))
-    weighted_risk_factor = np.dot(weights, risk_factors)
-    
-    # Calculate quantum mutual information for all pairs of stocks
-    num_stocks = returns.shape[1]
-    qmi_matrix = np.zeros((num_stocks, num_stocks))
-    for i in range(num_stocks):
-        for j in range(i+1, num_stocks):
-            qmi = quantum_mutual_information(density_matrix, i, j)
-            qmi_matrix[i, j] = qmi
-            qmi_matrix[j, i] = qmi
-    
-    # Penalize portfolios with high quantum mutual information between stocks
-    qmi_penalty = np.sum(weights * np.dot(qmi_matrix, weights))
-    
-    risk_penalty = portfolio_risk * risk_tolerance
-    total_cost = -portfolio_return + risk_penalty + 0.1 * weighted_risk_factor + 0.05 * qmi_penalty
-    return total_cost
-
-def optimize_portfolio_with_entanglement(stock_prices, total_investment, steps=25, risk_tolerance=0.5):
-    returns = stock_prices.pct_change().dropna().values
-    num_stocks = returns.shape[1]
-
-    fluctuation = stock_prices.pct_change().std().values
-    risk_factors = fluctuation / np.max(fluctuation)
-
-    density_matrix = construct_density_matrix(returns)
-
-    def objective(weights):
-        return advanced_cost(weights, returns, risk_factors, risk_tolerance, density_matrix)
-
-    constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
-    bounds = tuple((0, 1) for _ in range(num_stocks))
-    
-    initial_weights = np.ones(num_stocks) / num_stocks
-    result = minimize(objective, initial_weights, method='SLSQP', bounds=bounds, constraints=constraints)
-
-    optimized_weights = result.x
-    investment_amounts = optimized_weights * total_investment
-    portfolio_cost = objective(optimized_weights)
-
-    return optimized_weights, investment_amounts, portfolio_cost
-
 def compare_portfolio_methods(stock_prices, total_investment, steps=25, take_more_risk=False, risk_tolerance=0.5):
     returns = stock_prices.pct_change().dropna().values
     
     weights_hadamard, investments_hadamard, cost_hadamard = optimize_portfolio_with_hadamard_test(stock_prices, total_investment, steps, take_more_risk)
     weights_walk, investments_walk, cost_walk = optimize_portfolio_with_quantum_walk(stock_prices, total_investment, steps, take_more_risk)
     weights_qaoa, investments_qaoa, cost_qaoa = optimize_portfolio_with_qaoa(stock_prices, total_investment, steps, risk_tolerance)
-    weights_entanglement, investments_entanglement, cost_entanglement = optimize_portfolio_with_entanglement(stock_prices, total_investment, steps, risk_tolerance)
-
-    print("Entanglement-based Weights:", weights_entanglement)
-    print("Entanglement-based Investments:", investments_entanglement)
-    print("Entanglement-based Cost:", cost_entanglement)
 
     print("Hadamard Test Weights:", weights_hadamard)
     print("Hadamard Test Investments:", investments_hadamard)
@@ -386,13 +279,6 @@ def compare_portfolio_methods(stock_prices, total_investment, steps=25, take_mor
     
     costs = [cost_hadamard, cost_walk, cost_qaoa]
     min_cost_index = np.argmin(costs)
-    
-    costs = [cost_hadamard, cost_walk, cost_qaoa, cost_entanglement]
-    min_cost_index = np.argmin(costs)
-
-    if min_cost_index == 3:
-        print("Choosing Entanglement-based Portfolio")
-        return weights_entanglement, investments_entanglement, cost_entanglement
 
     if min_cost_index == 0:
         print("Choosing Hadamard Test Portfolio")
@@ -403,6 +289,3 @@ def compare_portfolio_methods(stock_prices, total_investment, steps=25, take_mor
     elif min_cost_index == 2:
         print("Choosing QAOA Portfolio")
         return weights_qaoa, investments_qaoa, cost_qaoa, "QAOA"
-    elif min_cost_index == 3:
-        print("Choosing Entanglement-based Portfolio")
-        return weights_entanglement, investments_entanglement, cost_entanglement

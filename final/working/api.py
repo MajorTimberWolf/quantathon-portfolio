@@ -1,11 +1,10 @@
 import time
 import numpy as np
 from fastapi import FastAPI
-from portfolio_optimization import compare_portfolio_methods, optimize_portfolio_with_hadamard_test, optimize_portfolio_with_quantum_walk, optimize_portfolio_with_qaoa, classical_portfolio_optimization, optimize_portfolio_with_entanglement
+from portfolio_optimization import compare_portfolio_methods, optimize_portfolio_with_hadamard_test, optimize_portfolio_with_quantum_walk, optimize_portfolio_with_qaoa, classical_portfolio_optimization
 import json
+from advanced_cost_functions import calculate_entanglement_based_cost
 from data_loader import load_historical_stock_data, normalize_stock_prices
-import time
-import numpy as np
 
 def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
     
@@ -22,9 +21,6 @@ def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
         weights = []
         amounts = []
 
-        runs = 1 if method == "compare" else runs
-        type = ""
-
         for _ in range(runs):
             if method == "hadamard":
                 optimized_weights, investment_amounts, cost = optimize_portfolio_with_hadamard_test(
@@ -38,25 +34,28 @@ def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
                 optimized_weights, investment_amounts, cost = optimize_portfolio_with_qaoa(
                     filtered_stock_prices, total_investment=amount, steps=35, risk_tolerance=risk
                 )
+            elif method == "entanglement_based":
+                returns = filtered_stock_prices.pct_change().dropna().values
+                fluctuation = filtered_stock_prices.pct_change().std().values
+                risk_factors = fluctuation / np.max(fluctuation)
+
+                # Use the entanglement-based cost function
+                optimized_weights = np.ones(len(input_stocks)) / len(input_stocks)  # Uniform initial weights
+                cost = calculate_entanglement_based_cost(
+                    optimized_weights, returns, risk_factors, risk_tolerance=risk
+                )
+                investment_amounts = optimized_weights * amount
             elif method == "classical":
                 returns = filtered_stock_prices.pct_change().dropna().values
                 optimized_weights, investment_amounts, cost = classical_portfolio_optimization(
                     returns, total_investment=amount, risk_tolerance=risk
                 )
             elif method == "compare":
-                optimized_weights, investment_amounts, cost, type = compare_portfolio_methods(
+                optimized_weights, investment_amounts, cost = compare_portfolio_methods(
                     filtered_stock_prices, total_investment=amount, steps=35, take_more_risk=True if risk > 0.5 else False
                 )
-            elif method == "entanglement":
-                optimized_weights, investment_amounts, cost = optimize_portfolio_with_entanglement(
-                    filtered_stock_prices, total_investment=amount, steps=35, risk_tolerance=risk
-            )
             else:
-                returns = filtered_stock_prices.pct_change().dropna().values
-                optimized_weights, investment_amounts, cost = classical_portfolio_optimization(
-                    returns, total_investment=amount, risk_tolerance=risk
-                )
-                method = "classical"
+                return {"error": "Invalid optimization method. Choose 'hadamard', 'quantum_walk', 'qaoa', 'entanglement_based', 'classical', or 'compare'."}
             
             print(f"Run {_ + 1} - Optimized Weights ({method}):", optimized_weights)
             print(f"Run {_ + 1} - Investment Amounts ({method}):", investment_amounts)
@@ -69,20 +68,15 @@ def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
 
         print("Time taken:", time.time() - time_start, "seconds")
 
-        body = {
-        "optimized_weights": average_optimized_weights.tolist(),
-        "investment_amounts": average_investment_amounts.tolist(),
-        "cost": cost,
-        "all_weights": weights,
-        "normalized_stock_prices": normalized_stock_prices.to_dict(),
-        "stock_prices": stock_prices.to_dict(),
-        "message": f"Optimization using {method} completed successfully across {runs} runs."
+        return {
+            "optimized_weights": average_optimized_weights.tolist(),
+            "investment_amounts": average_investment_amounts.tolist(),
+            "cost": cost,
+            "all_weights": weights,
+            "normalized_stock_prices": normalized_stock_prices.to_dict(),
+            "stock_prices": stock_prices.to_dict(),
+            "message": f"Optimization using {method} completed successfully across {runs} runs."
         }
-
-        if method == "compare":
-            body["method"] = type
-        
-        return body
 
     @app.get("/stocks")
     def stocks_route():
