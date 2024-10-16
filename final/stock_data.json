@@ -1,0 +1,108 @@
+{
+    "stock_data": {
+        "TATA STEEL LIMITED": {
+            "sector": "Basic Materials",
+            "market_cap": 1943305715712,
+            "profit_margin": null,
+            "revenue": null,
+            "pe_ratio": null,
+            "dividend_yield": 0.0227
+        },
+        "HINDUSTAN UNILEVER LTD.": {
+            "sector": "Consumer Defensive",
+            "market_cap": 6533505089536,
+            "profit_margin": null,
+            "revenue": null,
+            "pe_ratio": 63.097343,
+            "dividend_yield": 0.0150999995
+        },
+        "ASIAN PAINTS LIMITED": {
+            "sector": "Basic Materials",
+            "market_cap": 2941057761280,
+            "profit_margin": null,
+            "revenue": null,
+            "pe_ratio": 58.001137,
+            "dividend_yield": 0.011
+        },
+        "TATA MOTORS LIMITED": {
+            "sector": "Consumer Cyclical",
+            "market_cap": 3764150599680,
+            "profit_margin": null,
+            "revenue": null,
+            "pe_ratio": 10.417282,
+            "dividend_yield": 0.0032
+        },
+        "BRITANNIA INDUSTRIES LTD": {
+            "sector": "Consumer Defensive",
+            "market_cap": 1461755707392,
+            "profit_margin": null,
+            "revenue": null,
+            "pe_ratio": 66.78442,
+            "dividend_yield": 0.0123000005
+        },
+        "ADANI PORT & SEZ LTD": {
+            "sector": "Industrials",
+            "market_cap": 3068046868480,
+            "profit_margin": null,
+            "revenue": null,
+            "pe_ratio": 32.07543,
+            "dividend_yield": 0.0043
+        },
+        "COAL INDIA LTD": {
+            "sector": "Energy",
+            "market_cap": 3047161856000,
+            "profit_margin": null,
+            "revenue": null,
+            "pe_ratio": 8.054244,
+            "dividend_yield": 0.0592
+        },
+        "POWER GRID CORP. LTD.": {
+            "sector": "Utilities",
+            "market_cap": 3065942638592,
+            "profit_margin": null,
+            "revenue": null,
+            "pe_ratio": 19.165697,
+            "dividend_yield": 0.034
+        },
+        "BAJAJ FINSERV LTD.": {
+            "sector": "Financial Services",
+            "market_cap": 2954566041600,
+            "profit_margin": null,
+            "revenue": null,
+            "pe_ratio": 35.7147,
+            "dividend_yield": 0.0005
+        },
+        "EICHER MOTORS LTD": {
+            "sector": "Consumer Cyclical",
+            "market_cap": 1294944567296,
+            "profit_margin": null,
+            "revenue": null,
+            "pe_ratio": 30.989502,
+            "dividend_yield": 0.0107
+        },
+        "ICICI BANK LTD.": {
+            "sector": "Financial Services",
+            "market_cap": 8846692057088,
+            "profit_margin": null,
+            "revenue": null,
+            "pe_ratio": 19.83099,
+            "dividend_yield": 0.0081
+        },
+        "HCL TECHNOLOGIES LTD": {
+            "sector": "Technology",
+            "market_cap": 5060733435904,
+            "profit_margin": null,
+            "revenue": null,
+            "pe_ratio": 30.167768,
+            "dividend_yield": 0.026099999
+        },
+        "HDFC BANK LTD": {
+            "sector": "Financial Services",
+            "market_cap": 12850979405824,
+            "profit_margin": null,
+            "revenue": null,
+            "pe_ratio": 19.07464,
+            "dividend_yield": 0.0116
+        }
+    }
+}

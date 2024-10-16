@@ -1,7 +1,7 @@
 import time
 import numpy as np
 from fastapi import FastAPI
-from portfolio_optimization import compare_portfolio_methods, optimize_portfolio_with_hadamard_test, optimize_portfolio_with_quantum_walk, optimize_portfolio_with_qaoa, classical_portfolio_optimization
+from portfolio_optimization import compare_portfolio_methods, optimize_portfolio_with_hadamard_test, optimize_portfolio_with_quantum_walk, optimize_portfolio_with_qaoa, classical_portfolio_optimization, optimize_portfolio_with_entanglement
 import json
 from data_loader import load_historical_stock_data, normalize_stock_prices
 import time
@@ -47,6 +47,10 @@ def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
                 optimized_weights, investment_amounts, cost, type = compare_portfolio_methods(
                     filtered_stock_prices, total_investment=amount, steps=35, take_more_risk=True if risk > 0.5 else False
                 )
+            elif method == "entanglement":
+                optimized_weights, investment_amounts, cost = optimize_portfolio_with_entanglement(
+                    filtered_stock_prices, total_investment=amount, steps=35, risk_tolerance=risk
+            )
             else:
                 returns = filtered_stock_prices.pct_change().dropna().values
                 optimized_weights, investment_amounts, cost = classical_portfolio_optimization(
@@ -66,14 +70,13 @@ def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
         print("Time taken:", time.time() - time_start, "seconds")
 
         body = {
-            "optimized_weights": average_optimized_weights.tolist(),
-            "investment_amounts": average_investment_amounts.tolist(),
-            "cost": cost,
-            "all_weights": weights,
-            "normalized_stock_prices": normalized_stock_prices.to_dict(),
-            "stock_prices": stock_prices.to_dict(),
-            "message": f"Optimization using {method} completed successfully across {runs} runs.",
-            "method": method
+        "optimized_weights": average_optimized_weights.tolist(),
+        "investment_amounts": average_investment_amounts.tolist(),
+        "cost": cost,
+        "all_weights": weights,
+        "normalized_stock_prices": normalized_stock_prices.to_dict(),
+        "stock_prices": stock_prices.to_dict(),
+        "message": f"Optimization using {method} completed successfully across {runs} runs."
         }
 
         if method == "compare":
