@@ -1,6 +1,6 @@
 # Quantum Portfolio Optimization
 
-This project implements various quantum computing approaches to optimize investment portfolios. It uses quantum algorithms such as Quantum Walks, QAOA (Quantum Approximate Optimization Algorithm), and quantum entanglement measures to find optimal asset allocations.
+This project implements various quantum computing approaches to optimize investment portfolios. It uses quantum algorithms such as Quantum Walk, Classical, Hadamard Test, and QAOA (Quantum Approximate Optimization Algorithm) measures to find optimal asset allocations.
 
 ## Project Structure
 
