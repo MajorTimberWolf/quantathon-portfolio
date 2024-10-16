@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/chart";
 
 export function QuantumWalkWeightsBarChart({ data, colors }) {
-  const chartData = data.map((weight, index) => ({
+  const chartData = data?.map((weight, index) => ({
     company: Object.keys(colors)[index],
     weight,
     fill: colors[Object.keys(colors)[index]],

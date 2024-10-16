@@ -282,10 +282,10 @@ def compare_portfolio_methods(stock_prices, total_investment, steps=25, take_mor
 
     if min_cost_index == 0:
         print("Choosing Hadamard Test Portfolio")
-        return weights_hadamard, investments_hadamard, cost_hadamard
+        return weights_hadamard, investments_hadamard, cost_hadamard, "Hadamard Test"
     elif min_cost_index == 1:
         print("Choosing Quantum Walk Portfolio")
-        return weights_walk, investments_walk, cost_walk
+        return weights_walk, investments_walk, cost_walk, "Quantum Walk"
     elif min_cost_index == 2:
         print("Choosing QAOA Portfolio")
-        return weights_qaoa, investments_qaoa, cost_qaoa
+        return weights_qaoa, investments_qaoa, cost_qaoa, "QAOA"

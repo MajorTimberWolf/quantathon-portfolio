@@ -11,7 +11,9 @@ import StockDistributionExplanation from "./StockDistributionExplanation";
 import { Button } from "@/components/ui/button";
 import randomColor from "randomcolor";
 
-export default function Page({ searchParams: { investment, risk, stocks, method } }) {
+export default function Page({
+  searchParams: { investment, risk, stocks, method },
+}) {
   const [optimizedWeights, setOptimizedWeights] = useState([]);
   const [investmentAmounts, setInvestmentAmounts] = useState([]);
   const [normalizedStockPrices, setNormalizedStockPrices] = useState({});
@@ -22,6 +24,7 @@ export default function Page({ searchParams: { investment, risk, stocks, method 
   const [stockData, setStockData] = useState([]);
   const [weights, setWeightData] = useState([]);
   const [showFirstChart, setShowFirstChart] = useState(true);
+  const [methodUsed, setMethodUsed] = useState(method === "compare" ? "" : method);
 
   const handleToggle = () => {
     setShowFirstChart((prev) => !prev);
@@ -49,6 +52,9 @@ export default function Page({ searchParams: { investment, risk, stocks, method 
           setTotalInvestment(data.investment_amounts);
           setWeightData(data.all_weights);
           setStockData(decodedStocks);
+          if (data.method) {
+            setMethodUsed(data.method);
+          }
         } catch (error) {
           console.error("Error fetching optimized data:", error);
           setError("Failed to fetch data from the server");
@@ -78,9 +84,14 @@ export default function Page({ searchParams: { investment, risk, stocks, method 
 
   return (
     <div className="container mx-auto py-12 px-8 bg-[#121212] text-white">
-      <h1 className="text-5xl font-bold mb-8 text-center">
-        Suggested Investment Portfolio
-      </h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-5xl font-bold text-center">
+          Suggested Investment Portfolio
+        </h1>
+        <Button variant="secondary" className="font-bold text-lg">
+          {methodUsed}
+        </Button>
+      </div>
 
       <div className="flex flex-col lg:flex-row items-stretch gap-8 mb-8">
         <div className="flex-1 bg-[#1a1a1a] p-4 rounded-lg shadow-lg">

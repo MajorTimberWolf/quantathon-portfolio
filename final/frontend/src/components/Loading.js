@@ -34,7 +34,7 @@ const Loading = ({ message = "Loading..." }) => {
         />
         Your browser does not support the video tag.
       </video>
-      <div className="loader mb-4"></div>
+      {/* <div className="loader mb-4"></div> */}
       <p className="text-2xl font-semibold text-[#fefffe]">{message}</p>
       <div className="flex items-center text-[#fefffe] text-lg mt-4">
         <span>{tasks[currentTaskIndex]}</span>

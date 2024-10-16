@@ -22,6 +22,9 @@ def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
         weights = []
         amounts = []
 
+        runs = 1 if method == "compare" else runs
+        type = ""
+
         for _ in range(runs):
             if method == "hadamard":
                 optimized_weights, investment_amounts, cost = optimize_portfolio_with_hadamard_test(
@@ -41,11 +44,15 @@ def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
                     returns, total_investment=amount, risk_tolerance=risk
                 )
             elif method == "compare":
-                optimized_weights, investment_amounts, cost = compare_portfolio_methods(
+                optimized_weights, investment_amounts, cost, type = compare_portfolio_methods(
                     filtered_stock_prices, total_investment=amount, steps=35, take_more_risk=True if risk > 0.5 else False
                 )
             else:
-                return {"error": "Invalid optimization method. Choose 'hadamard', 'quantum_walk', 'qaoa', 'classical', or 'compare'."}
+                returns = filtered_stock_prices.pct_change().dropna().values
+                optimized_weights, investment_amounts, cost = classical_portfolio_optimization(
+                    returns, total_investment=amount, risk_tolerance=risk
+                )
+                method = "classical"
             
             print(f"Run {_ + 1} - Optimized Weights ({method}):", optimized_weights)
             print(f"Run {_ + 1} - Investment Amounts ({method}):", investment_amounts)
@@ -58,15 +65,21 @@ def setup_routes(app: FastAPI, stock_prices, normalized_stock_prices):
 
         print("Time taken:", time.time() - time_start, "seconds")
 
-        return {
+        body = {
             "optimized_weights": average_optimized_weights.tolist(),
             "investment_amounts": average_investment_amounts.tolist(),
             "cost": cost,
             "all_weights": weights,
             "normalized_stock_prices": normalized_stock_prices.to_dict(),
             "stock_prices": stock_prices.to_dict(),
-            "message": f"Optimization using {method} completed successfully across {runs} runs."
+            "message": f"Optimization using {method} completed successfully across {runs} runs.",
+            "method": method
         }
+
+        if method == "compare":
+            body["method"] = type
+        
+        return body
 
     @app.get("/stocks")
     def stocks_route():
