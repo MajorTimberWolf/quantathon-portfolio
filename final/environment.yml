@@ -1,0 +1,12 @@
+name: portfolio
+channels:
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - cirq
+      - numpy
+      - pandas
+      - scipy
+      - fastapi
