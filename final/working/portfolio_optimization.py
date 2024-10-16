@@ -154,7 +154,6 @@ def create_qaoa_circuit(qubits, gamma, beta):
     circuit = cirq.Circuit()
     n = len(qubits)
 
-    
     for i in range(n):
         circuit.append(cirq.rx(2 * gamma)(qubits[i]))
 
@@ -266,8 +265,6 @@ def compare_portfolio_methods(stock_prices, total_investment, steps=25, take_mor
     weights_walk, investments_walk, cost_walk = optimize_portfolio_with_quantum_walk(stock_prices, total_investment, steps, take_more_risk)
     weights_qaoa, investments_qaoa, cost_qaoa = optimize_portfolio_with_qaoa(stock_prices, total_investment, steps, risk_tolerance)
 
-    weights_classical, investments_classical, cost_classical = classical_portfolio_optimization(returns, total_investment, risk_tolerance)
-    
     print("Hadamard Test Weights:", weights_hadamard)
     print("Hadamard Test Investments:", investments_hadamard)
     print("Hadamard Test Cost:", cost_hadamard)
@@ -280,11 +277,7 @@ def compare_portfolio_methods(stock_prices, total_investment, steps=25, take_mor
     print("QAOA Investments:", investments_qaoa)
     print("QAOA Cost:", cost_qaoa)
     
-    print("Classical Optimization Weights:", weights_classical)
-    print("Classical Optimization Investments:", investments_classical)
-    print("Classical Optimization Cost:", cost_classical)
-
-    costs = [cost_hadamard, cost_walk, cost_qaoa, cost_classical]
+    costs = [cost_hadamard, cost_walk, cost_qaoa]
     min_cost_index = np.argmin(costs)
 
     if min_cost_index == 0:
@@ -296,6 +289,3 @@ def compare_portfolio_methods(stock_prices, total_investment, steps=25, take_mor
     elif min_cost_index == 2:
         print("Choosing QAOA Portfolio")
         return weights_qaoa, investments_qaoa, cost_qaoa
-    else:
-        print("Choosing Classical Portfolio")
-        return weights_classical, investments_classical, cost_classical
